@@ -4,7 +4,6 @@ import com.springbootsecurityrest.model.User;
 import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -15,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
+import java.util.Objects;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TestRestApi {
@@ -56,6 +55,14 @@ public class TestRestApi {
 	}
 
 	@Test
+	public void testUnauthorizedUserRequest(){
+		String url = getUrl("/users");
+		RequestEntity<Void> voidRequest = RequestEntity.get(URI.create(url)).build();
+		ResponseEntity<?> users = restTemplate.exchange(voidRequest, Object.class);
+		Assertions.assertEquals(401, users.getStatusCode().value());
+	}
+
+	@Test
 	public void testUsers(){
 		String url = getUrl("/auth/login");
 		String auth = getBaseAuthAnton("anton:1234");
@@ -64,7 +71,7 @@ public class TestRestApi {
 				.build();
 		ResponseEntity<User> userResponse = restTemplate.exchange(voidRequest, User.class);
 		url = getUrl("/users");
-		String token = userResponse.getHeaders().get("x-csrf-token").get(0);
+		String token = Objects.requireNonNull(userResponse.getHeaders().get("x-csrf-token")).get(0);
 		voidRequest = RequestEntity.get(URI.create(url)).header("x-csrf-token", token).build();
 		ResponseEntity<User[]> users = restTemplate.exchange(voidRequest, User[].class);
 		Assertions.assertEquals(200, users.getStatusCode().value());
